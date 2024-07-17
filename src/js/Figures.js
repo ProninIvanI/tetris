@@ -73,9 +73,7 @@ export class Figures {
   }
 
   getFigureByIndex(index) {
-    const keyFigure = Object.keys(this.informationFigures).find((key) => {
-      return this.informationFigures[key].number === index;
-    });
+    const keyFigure = Object.keys(this.informationFigures).find((key) => this.informationFigures[key].number === index);
     return keyFigure !== undefined ? this.informationFigures[keyFigure] : null;
   }
 }
