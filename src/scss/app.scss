@@ -1,0 +1,20 @@
+/* sccs field mark */
+.stringField {
+  height: 15px;
+  width: 150px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.collumnField {
+  height: 15px;
+  width: 15px;
+  border: 1px solid black;
+}
+
+.areaField {
+  width: auto;
+  height: auto;
+  margin: 5px;
+}
