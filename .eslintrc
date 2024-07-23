@@ -6,6 +6,8 @@
     "jquery": true
   },
   "rules": {
+    "operator-linebreak": ["error", "before"],
+    "no-console": "off",
     "arrow-body-style": ["error", "as-needed"],
     "no-plusplus": "off",
     "class-methods-use-this": "off",

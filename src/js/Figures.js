@@ -1,6 +1,9 @@
 export class Figures {
   constructor() {
     this.informationFigures = this.makeFigures();
+    this.figure = null;
+    this.coordinateAbscissa = null;
+    this.coordinateOrdinate = null;
   }
 
   makeFigures() {
@@ -26,11 +29,10 @@ export class Figures {
       },
       O: {
         matrix: [
-          [1, 1, 0],
-          [1, 1, 0],
-          [0, 0, 0],
+          [1, 1],
+          [1, 1],
         ],
-        color: 'yellow',
+        color: '#ADFF2F', // жёлтый
         number: 2,
       },
       L: {
@@ -48,7 +50,7 @@ export class Figures {
           [1, 1, 1],
           [0, 0, 0],
         ],
-        color: 'pink',
+        color: '#FF69B4', // розовый
         number: 4,
       },
       T: {
@@ -75,5 +77,14 @@ export class Figures {
   getFigureByIndex(index) {
     const keyFigure = Object.keys(this.informationFigures).find((key) => this.informationFigures[key].number === index);
     return keyFigure !== undefined ? this.informationFigures[keyFigure] : null;
+  }
+
+  takeRandomFigure() {
+    const index = Math.floor(Math.random() * 7);
+    return this.getFigureByIndex(index);
+  }
+
+  calculationOrdinateFigure(figureMatrix) {
+    return 4 - figureMatrix.length;
   }
 }

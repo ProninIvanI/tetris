@@ -6,5 +6,5 @@ import { GameLogic } from './GameLogic';
 const game = new InitGame();
 game.InitNewGame();
 
-const gameLogic = new GameLogic(10, 20); // переписать вызов конструктора у создания игры
+const gameLogic = new GameLogic(game.width, game.height);
 gameLogic.processGame();
