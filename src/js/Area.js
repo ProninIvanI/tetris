@@ -1,4 +1,6 @@
 import iconRestart  from '../images/restart.svg'
+import { bufferSizeField } from './Constants';
+import { invisiblePartArrayField } from './Constants';
 
 export class Area {
   constructor(width, height, score, eventBus) {
@@ -54,10 +56,8 @@ export class Area {
     this.createAreaNextFigureContainer();
     this.createAreaNextFigure();
 
-    this.eventBus.subscribe('showMessgeAboutEndGame', (data) => {
-      if (data.flag === false) {
-        this.createContainerMessage();
-      }
+    this.eventBus.subscribe('showMessageAboutEndGame', () => {
+      this.createContainerMessage();
     });
   }
 
@@ -248,8 +248,8 @@ export class Area {
 
   subscribeOnEvenPaintFigure() {
     this.eventBus.subscribe('paintFigure', (data) => {
-      const cell = document.getElementById('str' + (data.MoveY - 4) + 'cell' + (data.MoveX));
-      if (data.MoveY > 3) {
+      const cell = document.getElementById('str' + (data.MoveY - bufferSizeField) + 'cell' + (data.MoveX));
+      if (data.MoveY > invisiblePartArrayField) {
         cell.style.backgroundColor = data.colorCell;
       }
     });
@@ -257,8 +257,9 @@ export class Area {
 
   subscribeOnEventDeleteRowOnField() {
     this.eventBus.subscribe('deleteRowOnField', (data) => {
-      const cell = document.getElementById('str' + (data.row - 4) + 'cell' + data.collumn);
-      const cellHigher = document.getElementById('str' + (data.row - 4 - 1) + 'cell' + data.collumn);
+      console.log(bufferSizeField);
+      const cell = document.getElementById('str' + (data.row - bufferSizeField) + 'cell' + data.column);
+      const cellHigher = document.getElementById('str' + (data.row - bufferSizeField - 1) + 'cell' + data.column);
       cell.style.backgroundColor = cellHigher.style.backgroundColor;
     });
   }

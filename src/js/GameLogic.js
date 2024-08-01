@@ -1,6 +1,8 @@
 import { Figures } from './Figures';
 import { Field } from './Field';
-import _ from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
+import { invisiblePartArrayField } from './Constants';
+import { meanOfTheFixedFigure } from './Constants';
 
 export class GameLogic {
   constructor(width, height, score, eventBus) {
@@ -20,30 +22,30 @@ export class GameLogic {
   }
 
   processGame() {
-    let flagCreateNewFigure = true;
-    let flagCreateStartFigure = true;
+    let isCreateNewFigure = true;
+    let isCreateStartFigure = true;
 
     this.timerId = setInterval(() => {
       if (this.checkEndGameCondition()) {
-        if (flagCreateNewFigure) {
-          if (flagCreateStartFigure) {
+        if (isCreateNewFigure) {
+          if (isCreateStartFigure) {
             this.figures.figureCurrent = this.figures.takeRandomFigure();
             this.figures.figureNext = this.figures.takeRandomFigure();
-            flagCreateStartFigure = false;
+            isCreateStartFigure = false;
             this.eventBus.publish('updateNextFigure', this.figures.figureNext);
           } else {
             this.figures.figureCurrent = this.figures.figureNext;
             this.figures.figureNext = this.figures.takeRandomFigure();
             this.eventBus.publish('updateNextFigure', this.figures.figureNext);
           }
-          this.figures.coordinateAbscissa = 3;
+          this.figures.coordinateAbscissa = this.width / 2 - Math.round(this.figures.figureCurrent.matrix.length / 2);
           this.figures.coordinateOrdinate = this.figures.calculationOrdinateFigure(this.figures.figureCurrent.matrix);
           this.insertFigureOnField(
             this.figures.figureCurrent.matrix,
             this.figures.coordinateOrdinate,
             this.figures.coordinateAbscissa
           );
-          flagCreateNewFigure = false;
+          isCreateNewFigure = false;
         }
         if (
           this.checkOpportunityMoveDownFigure(
@@ -61,17 +63,17 @@ export class GameLogic {
             0
           );
         } else {
-          this.insertFigureInArray(
+          this.insertFigureInArrayFigure(
             this.figures.figureCurrent.matrix,
             this.figures.coordinateOrdinate,
             this.figures.coordinateAbscissa
           );
-          flagCreateNewFigure = true;
-          this.deleteCollectedString(this.field.arrayField);
+          isCreateNewFigure = true;
+          this.deleteCollectedRow(this.field.arrayField);
         }
       } else {
         clearInterval(this.timerId);
-        this.eventBus.publish('showMessgeAboutEndGame', {flag: false});
+        this.eventBus.publish('showMessageAboutEndGame');
       }
     }, 200);
   }
@@ -88,18 +90,14 @@ export class GameLogic {
     }
   }
 
-  insertFigureInArray(matrix, y, x) {
+  insertFigureInArrayFigure(matrix, y, x) {
     for (let i = 0; i < matrix.length; i++) {
       for (let j = 0; j < matrix[i].length; j++) {
         if (matrix[i][j] === 1) {
-          this.field.arrayField[y + i][x + j] = 2;
+          this.field.arrayField[y + i][x + j] = meanOfTheFixedFigure;
         }
       }
     }
-  }
-
-  calculationOrdinateFigure(figureMatrix) {
-    return 4 - figureMatrix.length;
   }
 
   insertFigureOnField(matrix, y, x) {
@@ -123,7 +121,7 @@ export class GameLogic {
   }
 
   checkOpportunityMoveDownFigure(matrix, y, x) {
-    let flag = true;
+    let isOpportunityMove = true;
     for (let i = 0; i < matrix.length; i++) {
       for (let j = 0; j < matrix[i].length; j++) {
         // проверяю, что у меня в матрице элемента я работаю именно с крайним
@@ -133,21 +131,21 @@ export class GameLogic {
         ) {
           // проверяю что крайний элемент матрицы имеет возможность упасть
           if (y + i + 1 >= this.field.arrayField.length || this.field.arrayField[y + i + 1][x + j] !== 0) {
-            flag = false;
+            isOpportunityMove = false;
           }
         }
       }
     }
-    return flag;
+    return isOpportunityMove;
   }
 
   // метод проверки условия конца игры, при окончании должно вернуть true
   checkEndGameCondition() {
-    let flag = false;
-    if (this.field.arrayField[3].indexOf(2) === -1) {
-      flag = true;
+    let isEndGame = false;
+    if (this.field.arrayField[invisiblePartArrayField].indexOf(meanOfTheFixedFigure) === -1) {
+      isEndGame = true;
     }
-    return flag;
+    return isEndGame;
   }
 
   workWithPressKey(key, matrix, y, x, color) {
@@ -175,19 +173,19 @@ export class GameLogic {
   }
 
   checkOpportunityMoveHorizontalFigure(matrix, y, x, changeX) {
-    let flag = true;
+    let isOpportunityMove = true;
     if (changeX < 0 && x + this.searchFirstLeftNonEmptyElement(matrix) + changeX < 0) {
-      flag = false;
+      isOpportunityMove = false;
     } else if (
       changeX > 0 &&
       x + this.searchFirstRightNonEmptyElement(matrix) + changeX >= this.field.arrayField[0].length
     ) {
-      flag = false;
+      isOpportunityMove = false;
     }
     if (this.checkForOverlapFigure(matrix, y, x, changeX) !== true) {
-      flag = false;
+      isOpportunityMove = false;
     }
-    return flag;
+    return isOpportunityMove;
   }
 
   searchFirstLeftNonEmptyElement(matrix) {
@@ -211,15 +209,15 @@ export class GameLogic {
   }
 
   checkForOverlapFigure(matrix, y, x, changeX) {
-    let flag = true;
+    let isOverlap = true;
     for (let i = 0; i < matrix.length; i++) {
       for (let j = 0; j < matrix[i].length; j++) {
-        if (matrix[i][j] === 1 && this.field.arrayField[y + i][x + j + changeX] === 2) {
-          flag = false;
+        if (matrix[i][j] === 1 && this.field.arrayField[y + i][x + j + changeX] === meanOfTheFixedFigure) {
+          isOverlap = false;
         }
       }
     }
-    return flag;
+    return isOverlap;
   }
 
   turnFigure(matrix, y, x, color) {
@@ -254,17 +252,17 @@ export class GameLogic {
   }
 
   checkOpportunityTurnFigure(matrix, y, x) {
-    let flag = true;
-    let cloneMatrix = _.cloneDeep(matrix);
+    let isOpportunityTurn = true;
+    let cloneMatrix = cloneDeep(matrix);
     cloneMatrix = this.turnMatrix(cloneMatrix);
     if (
       this.searchFirstLeftNonEmptyElement(cloneMatrix) + x < 0 ||
       this.searchFirstRightNonEmptyElement(cloneMatrix) + x >= this.field.arrayField[0].length ||
       this.checkForOverlapFigure(cloneMatrix, y, x, 0) !== true
     ) {
-      flag = false;
+      isOpportunityTurn = false;
     }
-    return flag;
+    return isOpportunityTurn;
   }
 
   checkCollectedString(matrix) {
@@ -272,7 +270,7 @@ export class GameLogic {
     for (let i = 0; i < matrix.length; i++) {
       let count = 0;
       for (let j = 0; j < matrix[i].length; j++) {
-        if (matrix[i][j] === 2) {
+        if (matrix[i][j] === meanOfTheFixedFigure) {
           count += 1;
         }
       }
@@ -283,13 +281,13 @@ export class GameLogic {
     return index;
   }
 
-  deleteCollectedString(matrix) {
-    let flag = true;
+  deleteCollectedRow(matrix) {
+    let isDelete = true;
     let countRowDeleted = 0;
-    while (flag) {
+    while (isDelete) {
       let indexString = this.checkCollectedString(matrix);
       if (indexString === -1) {
-        flag = false;
+        isDelete = false;
       } else {
         this.arrayOffsetWhenDeleteRow(matrix, indexString);
         countRowDeleted += 1;
@@ -304,7 +302,7 @@ export class GameLogic {
       if (this.checkRowOnEmpty(matrix, index)) {
         for (let j = 0; j < matrix[i].length; j++) {
           matrix[i][j] = matrix[i - 1][j];
-          this.eventBus.publish('deleteRowOnField', {row: i, collumn: j});
+          this.eventBus.publish('deleteRowOnField', {row: i, column: j});
         }
       }
     }

@@ -1,4 +1,6 @@
-import _ from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
+import { yellow } from './Constants';
+import { pink } from './Constants';
 
 export class Figures {
   constructor() {
@@ -35,7 +37,7 @@ export class Figures {
           [1, 1],
           [1, 1],
         ],
-        color: '#ADFF2F', // жёлтый
+        color: yellow,
         number: 2,
       },
       L: {
@@ -53,7 +55,7 @@ export class Figures {
           [1, 1, 1],
           [0, 0, 0],
         ],
-        color: '#FF69B4', // розовый
+        color: pink,
         number: 4,
       },
       T: {
@@ -79,11 +81,11 @@ export class Figures {
 
   getFigureByIndex(index) {
     const keyFigure = Object.keys(this.informationFigures).find((key) => this.informationFigures[key].number === index);
-    return keyFigure !== undefined ? _.cloneDeep(this.informationFigures[keyFigure]) : null;
+    return keyFigure !== undefined ? cloneDeep(this.informationFigures[keyFigure]) : null;
   }
 
   takeRandomFigure() {
-    const index = Math.floor(Math.random() * 7);
+    const index = Math.floor(Math.random() * Object.keys(this.informationFigures).length);
     return this.getFigureByIndex(index);
   }
 
