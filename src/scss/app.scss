@@ -1,4 +1,8 @@
 /* sccs field mark */
+* {
+  padding: 0;
+}
+
 .stringField {
   height: 15px;
   width: 150px;
@@ -13,8 +17,102 @@
   border: 1px solid black;
 }
 
+.area {
+  margin: 5px;
+  padding: 3px;
+  border: thick double black;
+  display: flex;
+  width: min-content;
+}
+
 .areaField {
+  width: min-content;
+  height: auto;
+}
+
+.gameInformation {
+  width: 150px;
+  height: auto;
+}
+
+.areaButton {
+  width: min-content;
+  height: min-content;
+}
+
+.areaFunctionality {
+  width: 150px;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.areaScore {
+  margin-top: 5px;
+  text-align: center;
+}
+
+.labelNextFigure {
+  margin-top: 15px;
+  text-align: center;
+}
+
+.areaNextFigure {
   width: auto;
   height: auto;
+}
+.areaNextFigureContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.strDivNextFigure {
+  height: min-content;
+  width: min-content;
+  display: flex;
+}
+
+.collumnFieldNextFigureColor {
+  height: 15px;
+  width: 15px;
+  border: 1px solid black;
+}
+.collumnFieldNextFigureColorless {
+  height: 15px;
+  width: 15px;
+}
+
+.containerMessage {
+  display: flex;
+  justify-content: center;
+}
+
+.containerMessageAboutEndGame {
+  height: min-content;
+  width: min-content;
+  border: thick double black;
   margin: 5px;
+}
+
+.messageAboutEndGame {
+  display: flex;
+  justify-content: center;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.buttonRestart {
+  width: 25px;
+  height: 25px;
+  margin-left: 7px;
+}
+
+.svgRestart {
+  width: 20px;
+  height: 20px;
 }

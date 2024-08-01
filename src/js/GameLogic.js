@@ -1,25 +1,45 @@
 import { Figures } from './Figures';
 import { Field } from './Field';
+import _ from 'lodash';
 
 export class GameLogic {
-  constructor(width, height) {
+  constructor(width, height, score, eventBus) {
     this.height = height + 4; // увеличиваю на 4, чтобы вставлять в эту область фигуры, но она не будет отбражаться
     this.width = width;
+    this.score = score;
+    this.eventBus = eventBus;
     this.figures = new Figures();
     this.field = new Field(this.width, this.height);
+    this.timerId = null;
+  }
+
+  startGame() {
+    this.processGame();
+    this.addEventKeyDown();
+    this.subscribeOnRestartGame();
   }
 
   processGame() {
     let flagCreateNewFigure = true;
+    let flagCreateStartFigure = true;
 
-    const timerId = setInterval(() => {
+    this.timerId = setInterval(() => {
       if (this.checkEndGameCondition()) {
         if (flagCreateNewFigure) {
-          this.figures.figure = this.figures.takeRandomFigure();
+          if (flagCreateStartFigure) {
+            this.figures.figureCurrent = this.figures.takeRandomFigure();
+            this.figures.figureNext = this.figures.takeRandomFigure();
+            flagCreateStartFigure = false;
+            this.eventBus.publish('updateNextFigure', this.figures.figureNext);
+          } else {
+            this.figures.figureCurrent = this.figures.figureNext;
+            this.figures.figureNext = this.figures.takeRandomFigure();
+            this.eventBus.publish('updateNextFigure', this.figures.figureNext);
+          }
           this.figures.coordinateAbscissa = 3;
-          this.figures.coordinateOrdinate = this.figures.calculationOrdinateFigure(this.figures.figure.matrix);
+          this.figures.coordinateOrdinate = this.figures.calculationOrdinateFigure(this.figures.figureCurrent.matrix);
           this.insertFigureOnField(
-            this.figures.figure.matrix,
+            this.figures.figureCurrent.matrix,
             this.figures.coordinateOrdinate,
             this.figures.coordinateAbscissa
           );
@@ -27,51 +47,42 @@ export class GameLogic {
         }
         if (
           this.checkOpportunityMoveDownFigure(
-            this.figures.figure.matrix,
+            this.figures.figureCurrent.matrix,
             this.figures.coordinateOrdinate,
             this.figures.coordinateAbscissa
           )
         ) {
           this.moveFigure(
-            this.figures.figure.matrix,
+            this.figures.figureCurrent.matrix,
             this.figures.coordinateOrdinate,
             this.figures.coordinateAbscissa,
-            this.figures.figure.color,
+            this.figures.figureCurrent.color,
             1,
             0
           );
         } else {
           this.insertFigureInArray(
-            this.figures.figure.matrix,
+            this.figures.figureCurrent.matrix,
             this.figures.coordinateOrdinate,
             this.figures.coordinateAbscissa
           );
           flagCreateNewFigure = true;
+          this.deleteCollectedString(this.field.arrayField);
         }
       } else {
-        clearInterval(timerId);
+        clearInterval(this.timerId);
+        this.eventBus.publish('showMessgeAboutEndGame', {flag: false});
       }
     }, 200);
-
-    document.addEventListener('keydown', (event) => {
-      this.workWithPressKey(
-        event.code,
-        this.figures.figure.matrix,
-        this.figures.coordinateOrdinate,
-        this.figures.coordinateAbscissa,
-        this.figures.figure.color
-      );
-    });
   }
 
   paintFigureOnField(matrix, y, x, color) {
     for (let i = 0; i < matrix.length; i++) {
       for (let j = 0; j < matrix[i].length; j++) {
         if (matrix[i][j] === 1) {
-          const cell = document.getElementById('str' + (y + i - 4) + 'cell' + (x + j));
-          if (y + i > 3) {
-            cell.style.backgroundColor = color;
-          }
+          const moveY = y + i;
+          const moveX = x + j;
+          this.eventBus.publish('paintFigure', {colorCell: color, MoveY: moveY, MoveX: moveX});
         }
       }
     }
@@ -132,10 +143,11 @@ export class GameLogic {
 
   // метод проверки условия конца игры, при окончании должно вернуть true
   checkEndGameCondition() {
+    let flag = false;
     if (this.field.arrayField[3].indexOf(2) === -1) {
-      return true;
+      flag = true;
     }
-    return false;
+    return flag;
   }
 
   workWithPressKey(key, matrix, y, x, color) {
@@ -145,6 +157,7 @@ export class GameLogic {
       this.moveFigure(matrix, y, x, color, 0, -1);
     } else if (key === 'Space' && this.checkOpportunityTurnFigure(matrix, y, x)) {
       this.turnFigure(matrix, y, x, color);
+      console.log(this.field.arrayField );
     } else if (key === 'ArrowDown' && this.checkOpportunityMoveDownFigure(matrix, y, x)) {
       this.moveFigure(matrix, y, x, color, 1, 0);
     }
@@ -212,9 +225,9 @@ export class GameLogic {
   turnFigure(matrix, y, x, color) {
     this.deleteFigureFromField(matrix, y, x);
     this.paintFigureOnField(matrix, y, x, '');
-    this.figures.figure.matrix = this.turnMatrix(matrix);
-    this.insertFigureOnField(this.figures.figure.matrix, y, x);
-    this.paintFigureOnField(this.figures.figure.matrix, y, x, color);
+    matrix = this.turnMatrix(matrix);
+    this.insertFigureOnField(this.figures.figureCurrent.matrix, y, x);
+    this.paintFigureOnField(this.figures.figureCurrent.matrix, y, x, color);
   }
 
   turnMatrix(matrix) {
@@ -242,7 +255,6 @@ export class GameLogic {
 
   checkOpportunityTurnFigure(matrix, y, x) {
     let flag = true;
-    const _ = require('lodash');
     let cloneMatrix = _.cloneDeep(matrix);
     cloneMatrix = this.turnMatrix(cloneMatrix);
     if (
@@ -253,5 +265,84 @@ export class GameLogic {
       flag = false;
     }
     return flag;
+  }
+
+  checkCollectedString(matrix) {
+    let index = -1;
+    for (let i = 0; i < matrix.length; i++) {
+      let count = 0;
+      for (let j = 0; j < matrix[i].length; j++) {
+        if (matrix[i][j] === 2) {
+          count += 1;
+        }
+      }
+      if (count === this.width) {
+        index = i;
+      }
+    }
+    return index;
+  }
+
+  deleteCollectedString(matrix) {
+    let flag = true;
+    let countRowDeleted = 0;
+    while (flag) {
+      let indexString = this.checkCollectedString(matrix);
+      if (indexString === -1) {
+        flag = false;
+      } else {
+        this.arrayOffsetWhenDeleteRow(matrix, indexString);
+        countRowDeleted += 1;
+      }
+    }
+    this.score.makeScorePerRow(countRowDeleted);
+    this.eventBus.publish('updateScore');
+  }
+
+  arrayOffsetWhenDeleteRow(matrix, index) {
+    for (let i = index; i > 4; i--) {
+      if (this.checkRowOnEmpty(matrix, index)) {
+        for (let j = 0; j < matrix[i].length; j++) {
+          matrix[i][j] = matrix[i - 1][j];
+          this.eventBus.publish('deleteRowOnField', {row: i, collumn: j});
+        }
+      }
+    }
+  }
+
+  checkRowOnEmpty(matrix, i) {
+    for (let j = 0; j < matrix[i].length; j++) {
+      if (matrix[i][j] !== 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  subscribeOnRestartGame() {
+    this.eventBus.subscribe('restartGame', () => {
+      this.restartGame();
+      clearInterval(this.timerId);
+      this.processGame();
+    });
+  }
+
+  restartGame() {
+    this.field.cleanArrayField();
+    this.eventBus.publish('cleanField');
+    this.score.score = 0;
+    this.eventBus.publish('updateScore');
+  }
+
+  addEventKeyDown() {
+    document.addEventListener('keydown', (event) => {
+      this.workWithPressKey(
+        event.code,
+        this.figures.figureCurrent.matrix,
+        this.figures.coordinateOrdinate,
+        this.figures.coordinateAbscissa,
+        this.figures.figureCurrent.color
+      );
+    });
   }
 }

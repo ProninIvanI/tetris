@@ -1,7 +1,10 @@
+import _ from 'lodash';
+
 export class Figures {
   constructor() {
     this.informationFigures = this.makeFigures();
-    this.figure = null;
+    this.figureCurrent = null;
+    this.figureNext = null;
     this.coordinateAbscissa = null;
     this.coordinateOrdinate = null;
   }
@@ -76,7 +79,7 @@ export class Figures {
 
   getFigureByIndex(index) {
     const keyFigure = Object.keys(this.informationFigures).find((key) => this.informationFigures[key].number === index);
-    return keyFigure !== undefined ? this.informationFigures[keyFigure] : null;
+    return keyFigure !== undefined ? _.cloneDeep(this.informationFigures[keyFigure]) : null;
   }
 
   takeRandomFigure() {

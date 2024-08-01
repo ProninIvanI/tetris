@@ -15,4 +15,12 @@ export class Field {
     }
     return array;
   }
+
+  cleanArrayField() {
+    for (let i = 0; i < this.width; i++) {
+      for (let j = 0; j < this.height; j++) {
+        this.arrayField[i][j] = 0;
+      }
+    }
+  }
 }
